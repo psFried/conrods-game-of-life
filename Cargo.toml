@@ -1,0 +1,8 @@
+[package]
+name = "conrods-game-of-life"
+version = "0.1.0"
+authors = ["pfried <philipsfried@gmail.com>"]
+
+[dependencies]
+conrod = "*"
+piston_window = "*"
