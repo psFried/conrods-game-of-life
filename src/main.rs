@@ -1,14 +1,19 @@
 extern crate conrod;
 extern crate piston_window;
+extern crate opengl_graphics;
+extern crate piston;
+extern crate input;
+extern crate glutin_window;
+
+mod conway;
 
 use std::path::{Path, PathBuf};
-
-use self::glutin_window::GlutinWindow;
-use self::opengl_graphics::{GlGraphics, OpenGL};
-use self::opengl_graphics::glyph_cache::GlyphCache;
-use self::piston::event_loop::{Events, EventLoop};
-use self::piston::input::{RenderEvent};
-use self::piston::window::{WindowSettings, Size};
+use glutin_window::GlutinWindow;
+use opengl_graphics::{GlGraphics, OpenGL};
+use opengl_graphics::glyph_cache::GlyphCache;
+use piston::event_loop::{Events, EventLoop};
+use piston::input::{RenderEvent, Event};
+use piston::window::{WindowSettings, Size};
 
 use self::conrod::{
     Background,
@@ -48,10 +53,12 @@ fn main() {
     let font_path = PathBuf::from("/System/Library/Fonts/Palatino.ttc");
     let glyph_cache: GlyphCache = GlyphCache::new(&font_path).unwrap();
     let ui = &mut Ui::new(glyph_cache, theme);
-    let event_iter = window.events().ups(3).max_fps(1);
+    let event_iter = window.events().ups(3).max_fps(60);
 
     for event in event_iter {
-        println!("{:?}");
+        if let Event::Update(update_args) = event {
+            println!("{:?}", event);
+        }
 
     }
 
