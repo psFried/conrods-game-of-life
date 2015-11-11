@@ -7,6 +7,7 @@ extern crate glutin_window;
 
 mod conway;
 
+use conway::Game;
 use std::path::{Path, PathBuf};
 use glutin_window::GlutinWindow;
 use opengl_graphics::{GlGraphics, OpenGL};
@@ -55,11 +56,34 @@ fn main() {
     let ui = &mut Ui::new(glyph_cache, theme);
     let event_iter = window.events().ups(3).max_fps(60);
 
+    let mut game = Game::new(100);
+
     for event in event_iter {
         if let Event::Update(update_args) = event {
-            println!("{:?}", event);
+            game = game.update();
         }
+
+        ui.handle_event(&event);
+
+        draw_ui(ui, &game);
 
     }
 
 }
+
+fn draw_ui<C: CharacterCache>(ui: &mut Ui<C>, game: &Game) {
+    let square_size = get_square_size(ui.win_h, ui.win_w, game.size());
+
+}
+
+fn get_square_size(win_h: f64, win_w: f64, game_size: usize) -> f64 {
+    (std::cmp::min(win_h, win_w) - 10.0) / game_size as f64
+}
+
+
+
+
+
+
+
+
