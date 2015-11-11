@@ -5,15 +5,15 @@ mod test;
 use std::cmp;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub struct Cell {
+pub struct CellLocation {
     x: usize,
     y: usize
 }
 
-impl Cell {
+impl CellLocation {
 
-    pub fn new(x: usize, y: usize) -> Cell {
-        Cell{x: x, y: y}
+    pub fn new(x: usize, y: usize) -> CellLocation {
+        CellLocation{x: x, y: y}
     }
 
 }
@@ -34,27 +34,31 @@ impl Game {
         Game{ matrix: matrix }
     }
 
-    pub fn contains(&self, cell: Cell) -> bool {
-        self.matrix.len() > cell.x &&
-            self.matrix[0].len() > cell.y
+    pub fn size(&self) -> usize {
+        self.matrix.len()
     }
 
-    pub fn is_alive(&self, cell: Cell) -> bool {
-        self.matrix[cell.x][cell.y]
+    pub fn contains(&self, cell: CellLocation) -> bool {
+        self.matrix.len() > cell.y &&
+            self.matrix[0].len() > cell.x
     }
 
-    pub fn set_state(&mut self, cell: Cell, alive: bool) {
-        self.matrix[cell.x][cell.y] = alive;
+    pub fn is_alive(&self, cell: CellLocation) -> bool {
+        self.matrix[cell.y][cell.x]
     }
 
-    pub fn count_adjacent_live(&self, cell: Cell) -> usize {
+    pub fn set_state(&mut self, cell: CellLocation, alive: bool) {
+        self.matrix[cell.y][cell.x] = alive;
+    }
+
+    pub fn count_adjacent_live(&self, cell: CellLocation) -> usize {
         let min_x = cell.x.saturating_sub(1);
         let min_y = cell.y.saturating_sub(1);
         
         let mut count: usize = 0;
         for current_x in min_x..(cell.x + 2) {
             for current_y in min_y..(cell.y + 2) {
-                let current_cell = Cell::new(current_x, current_y);
+                let current_cell = CellLocation::new(current_x, current_y);
                 if self.contains(current_cell) && 
                     self.is_alive(current_cell) &&
                     current_cell != cell {
@@ -64,6 +68,38 @@ impl Game {
         }
 
         count
+    }
+
+    pub fn locations(&self) -> Vec<CellLocation> {
+        let mut locations: Vec<CellLocation> = Vec::with_capacity(self.size() * self.size());
+        for (y, row) in self.matrix.iter().enumerate() {
+            for (x, state) in row.iter().enumerate() {
+                locations.push(CellLocation::new(y, x));
+            }
+        }
+        locations
+    }
+
+    pub fn update(self) -> Game {
+        let mut new_game = Game::new(self.size());
+        for location in self.locations() {
+            let state = self.is_alive(location);
+            let adjacent_live_cells = self.count_adjacent_live(location);
+            let new_state = Game::get_new_state(state, adjacent_live_cells);
+            println!("location: {:?}, alive?: {:?}, adj: {:?}, new_state: {:?}", location, state,
+                     adjacent_live_cells, new_state);
+            new_game.set_state(location, new_state);
+        }
+        new_game
+
+    }
+
+    fn get_new_state(is_alive: bool, live_neighbors_count: usize) -> bool {
+        if is_alive {
+            live_neighbors_count >= 2 && live_neighbors_count <= 3 
+        } else {
+            live_neighbors_count == 3
+        }
     }
 
 }
