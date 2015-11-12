@@ -86,8 +86,6 @@ impl Game {
             let state = self.is_alive(location);
             let adjacent_live_cells = self.count_adjacent_live(location);
             let new_state = Game::get_new_state(state, adjacent_live_cells);
-            println!("location: {:?}, alive?: {:?}, adj: {:?}, new_state: {:?}", location, state,
-                     adjacent_live_cells, new_state);
             new_game.set_state(location, new_state);
         }
         new_game
