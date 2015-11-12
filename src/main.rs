@@ -45,13 +45,12 @@ widget_ids!{
     PLAY_BUTTON
 }
 
-const PLAY_BUTTON_SPACE: f64 = 110.0;
 
 fn main() {
     let opengl = OpenGL::V3_2;
     let window: GlutinWindow = WindowSettings::new(
         "Conrod's Game of Life".to_string(),
-        Size { width: 500, height: 900 }
+        Size { width: 500, height: 650 }
     ).opengl(opengl)
     .exit_on_esc(true)
     .samples(4)
@@ -70,33 +69,36 @@ fn main() {
     let mut playing = false;
 
     for event in event_iter {
-        if let Event::Update(update_args) = event {
-            if playing {
-                game = game.update();
-            }
-        }
-
         ui.handle_event(&event);
 
-        if let Some(args) = event.render_args() {
-            gl.draw(args.viewport(), |graphics_context, gl| {
-                draw_ui(ui, &mut game, &mut playing);
-                ui.draw_if_changed(graphics_context, gl);
-            });
+        match event {
+            Event::Update(_) if playing => {game = game.update()},
+            Event::Render(render_args) => {
+                gl.draw(render_args.viewport(), |graphics_context, gl| {
+                    draw_ui(ui, &mut game, &mut playing);
+                    ui.draw_if_changed(graphics_context, gl);
+                });
+            },
+            _ => {}
         }
-
+                                                 
     }
 
 }
 
-fn draw_ui<C: CharacterCache>(ui: &mut Ui<C>, game: &mut Game, started: &mut bool) {
-    let game_size = game.size();
-    let matrix_size = ui.win_w.min(ui.win_h - PLAY_BUTTON_SPACE) - 10.0;
-    Background::new().rgb(0.5, 0.5, 0.5).set(ui);
+const PLAY_BUTTON_SPACE: f64 = 90.0;
+const MATRIX_PADDING: f64 = 10.0;
 
+fn draw_ui<C: CharacterCache>(ui: &mut Ui<C>, game: &mut Game, started: &mut bool) {
+    Background::new().rgb(0.8, 0.45, 0.6).set(ui);
+
+    let game_size = game.size();
+    let matrix_size = ui.win_w.min(ui.win_h - PLAY_BUTTON_SPACE) - MATRIX_PADDING;
+    let matrix_pos_y = (ui.win_h - matrix_size) / 2.0 - MATRIX_PADDING;
     WidgetMatrix::new(game_size, game_size)
         .dimensions(matrix_size, matrix_size)
-        .each_widget(|n: usize, col: usize, row: usize| {
+        .xy(0.0, matrix_pos_y)
+        .each_widget(|_n: usize, col: usize, row: usize| {
             let alive = game.is_alive(CellLocation::new(row, col));
             let cell_color: color::Color = if alive {
                 color::red()
@@ -106,25 +108,26 @@ fn draw_ui<C: CharacterCache>(ui: &mut Ui<C>, game: &mut Game, started: &mut boo
             
             Toggle::new(alive)
                 .react(|state: bool| { 
-                    println!("new: {:?}, row: {}, col: {}", state, row, col);
+                    println!("Toggle clicked: row: {}, col: {}", row, col);
                     game.set_state(CellLocation::new(row, col), state);
                 }).enabled(!*started)
                 .color(cell_color)
                 
         }).set(MATRIX, ui);
 
-    let button_label: &str = if *started {
-        "Stop"
+    let (button_label, button_color): (&str, color::Color) = if *started {
+        ("Stop", color::red())
     } else {
-        "Start"
+        ("Start", color::green())
     };
 
     Button::new()
         .label(button_label)
+        .color(button_color)
         .react(|| {
             *started = !*started;
         })
-        .down_from(MATRIX, 10.0)
+        .down_from(MATRIX, MATRIX_PADDING)
         .align_middle_x()
         .set(PLAY_BUTTON, ui);
 
