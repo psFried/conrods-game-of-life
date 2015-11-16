@@ -46,7 +46,7 @@ fn main() {
 
     let theme = Theme::default();
 
-    let event_iter = create_window(400, 650, 2, 30);
+    let window: GlutinWindow = create_window(400, 650);
     let mut gl = GlGraphics::new(OPENGL);
     let font_path = PathBuf::from("/System/Library/Fonts/Palatino.ttc");
     let glyph_cache: GlyphCache = GlyphCache::new(&font_path).unwrap();
@@ -55,8 +55,7 @@ fn main() {
     let mut game = Game::new(40);
     let mut playing = false;
 
-
-    for event in event_iter {
+    for event in window.events().ups(2).max_fps(30) {
         ui.handle_event(&event);
 
         match event {
@@ -69,23 +68,18 @@ fn main() {
             },
             _ => {}
         }
-
     }
-
 }
 
-fn create_window(width: u32, height: u32, ups: u64, fps: u64) -> event_loop::WindowEvents<GlutinWindow, Event> {
-    let window: GlutinWindow = WindowSettings::new(
+fn create_window(width: u32, height: u32) -> GlutinWindow {
+    WindowSettings::new(
         "Conrod's Game of Life".to_string(),
         Size { width: width, height: height }
     ).opengl(OPENGL)
     .exit_on_esc(true)
     .samples(4)
     .build()
-    .unwrap();
-
-    window.events().ups(ups).max_fps(fps)
-
+    .unwrap()
 }
 
 
@@ -103,7 +97,6 @@ fn create_cell_matrix<C: CharacterCache>(ui: &mut Ui<C>, game: &mut Game, starte
         .dimensions(matrix_size, matrix_size)
         .xy(0.0, matrix_pos_y)
         .each_widget(|_n: usize, col: usize, row: usize| {
-            //create_cell(ui, game, *started,  col, row)
             let alive = game.is_alive(CellLocation::new(row, col));
             let cell_color: color::Color = if alive {
                 color::red()
