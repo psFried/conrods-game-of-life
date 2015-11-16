@@ -111,10 +111,10 @@ fn create_cell_matrix<C: CharacterCache>(ui: &mut Ui<C>, game: &mut Game, starte
                 color::grey()
             };
 
+            let game_ref: &mut Game = game;
             Toggle::new(alive)
-                .react(|state: bool| {
-                    println!("Toggle clicked: row: {}, col: {}", row, col);
-                    game.set_state(CellLocation::new(row, col), state);
+                .react(move |state: bool| {
+                    game_ref.set_state(CellLocation::new(row, col), state);
                 }).enabled(!started)
                 .color(cell_color)
         }).set(MATRIX, ui);
