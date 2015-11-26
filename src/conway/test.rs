@@ -1,6 +1,35 @@
 use super::*;
 
 #[test]
+fn adjacent_cells_should_be_returned_in_a_vec() {
+    let mut game = Game{
+        matrix: vec![
+            vec![true, false, false, false],
+            vec![true, false, false, false],
+            vec![true, false, false, false],
+            vec![true, false, false, false]
+        ]
+    };
+    let adj_cells: Vec<CellLocation> = game.adjacent_cells(CellLocation::new(3, 3));
+
+    assert_eq!(9, adj_cells.len());
+    
+    let expected_cells = vec![
+        (2, 2),
+        (3, 2),
+        (0, 2),
+        (2, 3),
+        (3, 3),
+        (0, 3),
+        (2, 0),
+        (3, 0),
+        (0, 0)
+    ].iter().map(|&(x, y)| CellLocation::new(x, y)).collect::<Vec<CellLocation>>();
+
+    assert_eq!(expected_cells, adj_cells);
+}
+
+#[test]
 fn new_game_should_create_game_of_given_size() {
     let game: Game = Game::new(8);
 
@@ -22,31 +51,6 @@ fn should_be_able_to_get_and_set_cell_state() {
     assert_eq!(true, game.is_alive(cell));
 }
 
-#[test]
-fn game_should_count_the_number_of_live_adjacent_cells() {
-
-    let game = Game{
-        matrix: vec![
-            vec![true, true, true],
-            vec![true, true, true],
-            vec![true, true, true]
-        ]
-    };
-
-    assert_eq!(8, game.count_adjacent_live(CellLocation::new(1, 1)));
-    assert_eq!(3, game.count_adjacent_live(CellLocation::new(0, 0)));
-    assert_eq!(5, game.count_adjacent_live(CellLocation::new(2, 1)));
-
-    let game2 = Game{
-        matrix: vec![
-            vec![false, false, true],
-            vec![false, true, true],
-            vec![true, true, false]
-        ]
-    };
-
-    assert_eq!(4, game2.count_adjacent_live(CellLocation::new(1, 1)));
-}
 
 #[test]
 fn game_should_kill_a_cell_with_fewer_than_2_adjacent_live_neighbors() {
@@ -68,12 +72,31 @@ fn game_should_kill_a_cell_with_fewer_than_2_adjacent_live_neighbors() {
 }
 
 #[test]
+fn game_should_wrap_around_at_edges() {
+    let mut game = Game{
+        matrix: vec![
+            vec![true, false, false, false],
+            vec![true, false, false, false],
+            vec![false, false, false, false],
+            vec![true, false, false, false]
+        ]
+    };
+    game = game.update();
+    assert!(game.is_alive(CellLocation::new(0, 0)));
+    assert!(game.is_alive(CellLocation::new(1, 0)));
+    assert!(game.is_alive(CellLocation::new(3, 0)));
+    assert!(!game.is_alive(CellLocation::new(0, 1)));
+    assert!(!game.is_alive(CellLocation::new(0, 3)));
+}
+
+#[test]
 fn game_should_keep_cells_with_two_or_three_live_neighbors() {
     let mut game = Game{
         matrix: vec![
-            vec![true, false, false],
-            vec![true, true, false],
-            vec![false, true, false]
+            vec![true, false, false, false],
+            vec![true, true, false, false],
+            vec![false, true, false, false],
+            vec![false, false, false, false]
         ]
     };
     game = game.update();
@@ -93,11 +116,9 @@ fn game_should_kill_cells_with_more_than_three_live_neighbors() {
         ]
     };
     game = game.update();
-    assert!(game.is_alive(CellLocation::new(0, 0)));
-    assert!(game.is_alive(CellLocation::new(1, 0)));
-    assert!(game.is_alive(CellLocation::new(1, 2)));
 
-    assert!(!game.is_alive(CellLocation::new(1, 1)));
+    game.locations().iter().map(|cell| assert!(!game.is_alive(*cell)));
+
 }
 
 #[test]

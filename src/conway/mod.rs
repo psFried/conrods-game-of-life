@@ -38,7 +38,7 @@ impl Game {
         self.matrix.len()
     }
 
-    pub fn contains(&self, cell: CellLocation) -> bool {
+    fn contains(&self, cell: CellLocation) -> bool {
         self.matrix.len() > cell.y &&
             self.matrix[0].len() > cell.x
     }
@@ -51,22 +51,30 @@ impl Game {
         self.matrix[cell.y][cell.x] = alive;
     }
 
-    pub fn count_adjacent_live(&self, cell: CellLocation) -> usize {
-        let min_x = cell.x.saturating_sub(1);
-        let min_y = cell.y.saturating_sub(1);
+    pub fn adjacent_cells(&self, center_cell: CellLocation) -> Vec<CellLocation> {
+        let mut cells: Vec<CellLocation> = Vec::new();
+        let max: usize = self.size() - 1;
         
-        let mut count: usize = 0;
-        for current_x in min_x..(cell.x + 2) {
-            for current_y in min_y..(cell.y + 2) {
-                let current_cell = CellLocation::new(current_x, current_y);
-                if self.contains(current_cell) && 
-                    self.is_alive(current_cell) &&
-                    current_cell != cell {
-                        count += 1;
-                }
+        let mut x = Game::wrapping_sub(center_cell.x, 1, max);
+        let mut y = Game::wrapping_sub(center_cell.y, 1, max);
+
+        for yi in 0..3 {
+            let cell_y = Game::wrapping_add(y, yi, max);
+            for xi in 0..3 {
+                let cell_x = Game::wrapping_add(x, xi, max);
+                cells.push(CellLocation::new(cell_x, cell_y));
             }
         }
+        cells
+    }
 
+    fn count_adjacent_live(&self, cell: CellLocation) -> usize {
+        let mut count: usize = 0;
+        for loc in self.adjacent_cells(cell) {
+            if self.is_alive(loc) {
+                count += 1;
+            }
+        }
         count
     }
 
@@ -92,11 +100,29 @@ impl Game {
 
     }
 
-    fn get_new_state(is_alive: bool, live_neighbors_count: usize) -> bool {
-        if is_alive {
-            live_neighbors_count >= 2 && live_neighbors_count <= 3 
+    fn wrapping_sub(left: usize, right: usize, max: usize) -> usize {
+        let initial_result = left.wrapping_sub(right);
+        if (initial_result > left) {
+            max - (usize::max_value() - initial_result)
         } else {
-            live_neighbors_count == 3
+            initial_result
+        }
+    }
+
+    fn wrapping_add(left: usize, right: usize, max: usize) -> usize {
+        let initial_result = left.wrapping_add(right);
+        if initial_result > max {
+            initial_result - max - 1
+        } else {
+            initial_result
+        }
+    }
+
+    fn get_new_state(is_alive: bool, live_cell_count: usize) -> bool {
+        match live_cell_count {
+            3 => true,
+            4 => is_alive,
+            _ => false
         }
     }
 
