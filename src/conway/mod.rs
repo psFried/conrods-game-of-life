@@ -24,23 +24,22 @@ pub struct Game {
 
 impl Game {
 
-    pub fn new(size: usize) -> Game {
-        let mut matrix: Vec<Vec<bool>> = Vec::with_capacity(size);
+    pub fn new(width: usize, height: usize) -> Game {
+        let mut matrix: Vec<Vec<bool>> = Vec::with_capacity(height);
 
-        for i in 0..size {
-            matrix.push(vec![false; size]);
+        for i in 0..height {
+            matrix.push(vec![false; width]);
         }
     
         Game{ matrix: matrix }
     }
 
-    pub fn size(&self) -> usize {
+    pub fn height(&self) -> usize {
         self.matrix.len()
     }
 
-    fn contains(&self, cell: CellLocation) -> bool {
-        self.matrix.len() > cell.y &&
-            self.matrix[0].len() > cell.x
+    pub fn width(&self) -> usize {
+        self.matrix[0].len()
     }
 
     pub fn is_alive(&self, cell: CellLocation) -> bool {
@@ -53,19 +52,43 @@ impl Game {
 
     pub fn adjacent_cells(&self, center_cell: CellLocation) -> Vec<CellLocation> {
         let mut cells: Vec<CellLocation> = Vec::new();
-        let max: usize = self.size() - 1;
+        let max_x: usize = self.width() - 1;
+        let max_y: usize = self.height() - 1;
         
-        let mut x = Game::wrapping_sub(center_cell.x, 1, max);
-        let mut y = Game::wrapping_sub(center_cell.y, 1, max);
+        let mut x = Game::wrapping_sub(center_cell.x, 1, max_x);
+        let mut y = Game::wrapping_sub(center_cell.y, 1, max_y);
 
         for yi in 0..3 {
-            let cell_y = Game::wrapping_add(y, yi, max);
+            let cell_y = Game::wrapping_add(y, yi, max_y);
             for xi in 0..3 {
-                let cell_x = Game::wrapping_add(x, xi, max);
+                let cell_x = Game::wrapping_add(x, xi, max_x);
                 cells.push(CellLocation::new(cell_x, cell_y));
             }
         }
         cells
+    }
+
+    pub fn update(self) -> Game {
+        let mut new_game = Game::new(self.width(), self.height());
+        for location in self.locations() {
+            let state = self.is_alive(location);
+            let adjacent_live_cells = self.count_adjacent_live(location);
+            let new_state = Game::get_new_state(state, adjacent_live_cells);
+            new_game.set_state(location, new_state);
+        }
+        new_game
+
+    }
+
+    pub fn resize(&self, new_w: usize, new_h: usize) -> Game {
+        let mut new_game = Game::new(new_w, new_h);
+
+        for loc in self.locations() {
+            if new_game.contains(loc) {
+                new_game.set_state(loc, self.is_alive(loc));
+            }
+        }
+        new_game
     }
 
     fn count_adjacent_live(&self, cell: CellLocation) -> usize {
@@ -78,27 +101,20 @@ impl Game {
         count
     }
 
-    pub fn locations(&self) -> Vec<CellLocation> {
-        let mut locations: Vec<CellLocation> = Vec::with_capacity(self.size() * self.size());
+    fn contains(&self, location: CellLocation) -> bool {
+        self.matrix.len() > location.y && self.matrix[0].len() > location.x
+    }
+
+    fn locations(&self) -> Vec<CellLocation> {
+        let mut locations: Vec<CellLocation> = Vec::with_capacity(self.width() * self.height());
         for (y, row) in self.matrix.iter().enumerate() {
             for (x, state) in row.iter().enumerate() {
-                locations.push(CellLocation::new(y, x));
+                locations.push(CellLocation::new(x, y));
             }
         }
         locations
     }
 
-    pub fn update(self) -> Game {
-        let mut new_game = Game::new(self.size());
-        for location in self.locations() {
-            let state = self.is_alive(location);
-            let adjacent_live_cells = self.count_adjacent_live(location);
-            let new_state = Game::get_new_state(state, adjacent_live_cells);
-            new_game.set_state(location, new_state);
-        }
-        new_game
-
-    }
 
     fn wrapping_sub(left: usize, right: usize, max: usize) -> usize {
         let initial_result = left.wrapping_sub(right);

@@ -1,6 +1,53 @@
 use super::*;
 
 #[test]
+fn game_should_be_resized_down() {
+    let mut game = Game{
+        matrix: vec![
+            vec![false, false, false, true],
+            vec![false, false, false, true],
+            vec![false, false, false, true],
+            vec![true, true, true, true]
+        ]
+    };
+
+    game = game.resize(3, 3);
+
+    assert_eq!(3, game.height());
+    assert_eq!(3, game.width());
+    for i in 0..3 {
+        assert!(!game.is_alive(CellLocation::new(i, 2)));
+    }
+    for i in 0..3 {
+        assert!(!game.is_alive(CellLocation::new(2, i)));
+    }
+}
+
+
+#[test]
+fn game_should_be_resized_up() {
+    let mut game = Game{
+        matrix: vec![
+            vec![false, false, false, true],
+            vec![false, false, false, true],
+            vec![false, false, false, true],
+            vec![true, true, true, true]
+        ]
+    };
+
+    game = game.resize(5, 5);
+
+    assert_eq!(5, game.height());
+    assert_eq!(5, game.width());
+    for i in 0..5 {
+        assert!(!game.is_alive(CellLocation::new(i, 4)));
+    }
+    for i in 0..5 {
+        assert!(!game.is_alive(CellLocation::new(4, i)));
+    }
+}
+
+#[test]
 fn adjacent_cells_should_be_returned_in_a_vec() {
     let mut game = Game{
         matrix: vec![
@@ -31,9 +78,9 @@ fn adjacent_cells_should_be_returned_in_a_vec() {
 
 #[test]
 fn new_game_should_create_game_of_given_size() {
-    let game: Game = Game::new(8);
+    let game: Game = Game::new(8, 12);
 
-    assert_eq!(8, game.matrix.len());
+    assert_eq!(12, game.matrix.len());
     for row in game.matrix {
         assert_eq!(8, row.len());
     }
@@ -42,7 +89,7 @@ fn new_game_should_create_game_of_given_size() {
 #[test]
 fn should_be_able_to_get_and_set_cell_state() {
 
-    let mut game = Game::new(10);
+    let mut game = Game::new(10, 10);
 
     let cell = CellLocation::new(0, 0);
     assert_eq!(false, game.is_alive(cell));
